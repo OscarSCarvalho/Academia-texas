@@ -4,6 +4,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Dumbbell, Search, Delete, ChevronDown, ChevronUp } from "lucide-react"
 import { mockFichas, mockAlunos } from "@/lib/mock-data"
+import { useLang } from "../../language-context"
+import { LangSwitcher } from "../../lang-switcher"
 
 type Step = "busca" | "ficha"
 
@@ -16,6 +18,7 @@ function maskCpf(digits: string) {
 }
 
 export default function TreinosTotemPage() {
+  const { t } = useLang()
   const [step, setStep] = useState<Step>("busca")
   const [cpf, setCpf] = useState("")
   const [ficha, setFicha] = useState<typeof mockFichas[0] | null>(null)
@@ -49,37 +52,35 @@ export default function TreinosTotemPage() {
     <div className="h-screen bg-gray-950 flex flex-col overflow-hidden">
       <header className="flex items-center justify-between px-12 py-6 border-b border-white/5 flex-shrink-0">
         <button onClick={() => setStep("busca")} className="flex items-center gap-2 text-white/50 hover:text-white transition-colors">
-          <ArrowLeft className="w-5 h-5" /> Voltar
+          <ArrowLeft className="w-5 h-5" /> {t.back}
         </button>
         <div className="flex items-center gap-3">
           <Dumbbell className="w-5 h-5 text-indigo-400" />
-          <span className="text-white font-bold">Minha Ficha de Treino</span>
+          <span className="text-white font-bold">{t.workoutsHeader}</span>
         </div>
-        <div className="w-24" />
+        <LangSwitcher compact />
       </header>
 
       <div className="flex-1 overflow-y-auto px-12 py-6">
-        {/* Header ficha */}
         <div className="bg-indigo-950/50 border border-indigo-500/20 rounded-3xl p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-indigo-300 text-sm font-medium mb-1">Ficha de Treino</p>
+              <p className="text-indigo-300 text-sm font-medium mb-1">{t.fichaLabel}</p>
               <h2 className="text-2xl font-black text-white">{alunoNome}</h2>
               <p className="text-white/50 text-sm mt-1">
-                {ficha.instrutor} · Objetivo: <span className="text-indigo-300 font-semibold">{ficha.objetivo}</span>
+                {ficha.instrutor} · {t.goalLabel}: <span className="text-indigo-300 font-semibold">{ficha.objetivo}</span>
               </p>
             </div>
             <div className="text-right">
-              <p className="text-white/30 text-xs">Criada em</p>
+              <p className="text-white/30 text-xs">{t.createdOn}</p>
               <p className="text-white font-semibold">{new Date(ficha.criado).toLocaleDateString("pt-BR")}</p>
               <div className="mt-2 bg-indigo-600/20 border border-indigo-500/30 rounded-xl px-3 py-1.5">
-                <p className="text-indigo-300 text-sm font-semibold">{ficha.treinos.length} treinos</p>
+                <p className="text-indigo-300 text-sm font-semibold">{ficha.treinos.length} {t.workoutsCount}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Treinos accordion */}
         <div className="space-y-3">
           {ficha.treinos.map((treino, i) => (
             <div key={i} className={`rounded-3xl border transition-all overflow-hidden ${openTreino === i ? "border-indigo-500/50 bg-indigo-950/30" : "border-white/10 bg-white/5"}`}>
@@ -93,7 +94,7 @@ export default function TreinosTotemPage() {
                   </div>
                   <div className="text-left">
                     <p className="text-white font-bold text-lg">{treino.dia}</p>
-                    <p className="text-white/40 text-sm">{treino.exercicios.length} exercícios</p>
+                    <p className="text-white/40 text-sm">{treino.exercicios.length} {t.exercisesCount}</p>
                   </div>
                 </div>
                 {openTreino === i
@@ -124,7 +125,7 @@ export default function TreinosTotemPage() {
           <Link href="/totem/checkin"
             className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-bold text-white text-lg"
             style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
-            <Dumbbell className="w-5 h-5" /> Fazer Check-in Agora
+            <Dumbbell className="w-5 h-5" /> {t.checkinNow}
           </Link>
         </div>
       </div>
@@ -136,13 +137,13 @@ export default function TreinosTotemPage() {
     <div className="h-screen bg-gray-950 flex flex-col">
       <header className="flex items-center justify-between px-12 py-6 border-b border-white/5">
         <Link href="/totem" className="flex items-center gap-2 text-white/50 hover:text-white transition-colors">
-          <ArrowLeft className="w-5 h-5" /> Início
+          <ArrowLeft className="w-5 h-5" /> {t.home}
         </Link>
         <div className="flex items-center gap-3">
           <Dumbbell className="w-5 h-5 text-indigo-400" />
-          <span className="text-white font-bold">Ver Meu Treino</span>
+          <span className="text-white font-bold">{t.workoutsTitle}</span>
         </div>
-        <div className="w-24" />
+        <LangSwitcher compact />
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-8 px-12">
@@ -150,23 +151,21 @@ export default function TreinosTotemPage() {
           <div className="w-20 h-20 rounded-3xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-5">
             <Dumbbell className="w-10 h-10 text-indigo-400" />
           </div>
-          <h1 className="text-4xl font-black text-white mb-2">Acesse sua Ficha</h1>
-          <p className="text-white/50 text-lg">Digite seu CPF para ver seus exercícios de hoje</p>
+          <h1 className="text-4xl font-black text-white mb-2">{t.workoutsSearchTitle}</h1>
+          <p className="text-white/50 text-lg">{t.workoutsSearchSub}</p>
         </div>
 
-        {/* CPF Display */}
         <div className="w-full max-w-sm">
           <div className={`bg-white/5 border-2 rounded-2xl px-6 py-5 text-center overflow-hidden transition-colors ${notFound ? "border-red-500/50" : "border-white/10"}`}>
             <span className="text-4xl font-black text-white tracking-wide font-mono">
-              {cpf || <span className="text-white/20">000.000.000-00</span>}
+              {cpf || <span className="text-white/20">{t.idPlaceholder}</span>}
             </span>
           </div>
           {notFound && (
-            <p className="text-red-400 text-center text-sm mt-2">CPF não encontrado no sistema</p>
+            <p className="text-red-400 text-center text-sm mt-2">{t.notFound}</p>
           )}
         </div>
 
-        {/* Numpad */}
         <div className="grid grid-cols-3 gap-3 w-full max-w-sm">
           {nums.map((k, i) => (
             <button
@@ -196,7 +195,7 @@ export default function TreinosTotemPage() {
           className="w-full max-w-sm flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-white text-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ background: "linear-gradient(135deg, #ea580c, #db2777)" }}
         >
-          <Search className="w-5 h-5" /> Buscar Treino
+          <Search className="w-5 h-5" /> {t.searchBtn}
         </button>
       </div>
     </div>

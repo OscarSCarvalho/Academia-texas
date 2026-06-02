@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Dumbbell, QrCode, UserPlus, ClipboardList, ChevronRight, Zap, Trophy, Flame } from "lucide-react"
+import { IconBarbell, IconPlayerPlay, IconId, IconClipboardList } from "@tabler/icons-react"
+import { useLang } from "../language-context"
+import { LangSwitcher } from "../lang-switcher"
 
 const BG_IMAGES = [
   "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=80",
@@ -13,52 +15,14 @@ const BG_IMAGES = [
   "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=1400&q=80",
 ]
 
-const STATS = [
-  { icon: Trophy, label: "Alunos Ativos", value: "248" },
-  { icon: Zap, label: "Aulas Hoje", value: "12" },
-  { icon: Flame, label: "Check-ins Hoje", value: "67" },
-]
-
-const ACTIONS = [
-  {
-    href: "/totem/checkin",
-    icon: QrCode,
-    label: "Fazer Check-in",
-    desc: "Entrada rápida por QR Code ou CPF",
-    color: "from-indigo-500 to-violet-600",
-    glow: "shadow-indigo-500/40",
-    size: "normal",
-  },
-  {
-    href: "/totem/cadastro",
-    icon: UserPlus,
-    label: "Quero me Matricular",
-    desc: "Cadastro e pagamento na hora",
-    color: "from-emerald-500 to-teal-600",
-    glow: "shadow-emerald-500/40",
-    size: "normal",
-  },
-  {
-    href: "/totem/treinos",
-    icon: ClipboardList,
-    label: "Ver Meu Treino",
-    desc: "Acesse sua ficha de exercícios",
-    color: "from-orange-500 to-pink-600",
-    glow: "shadow-orange-500/40",
-    size: "normal",
-  },
-]
-
 export default function TotemHomePage() {
+  const { t } = useLang()
   const [bgIndex, setBgIndex] = useState(0)
   const [prevIndex, setPrevIndex] = useState<number | null>(null)
   const [transitioning, setTransitioning] = useState(false)
   const [time, setTime] = useState("")
   const [date, setDate] = useState("")
-  const [idle, setIdle] = useState(false)
-  const [idleTimer, setIdleTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
 
-  // Troca de background
   useEffect(() => {
     const interval = setInterval(() => {
       setPrevIndex(bgIndex)
@@ -72,202 +36,152 @@ export default function TotemHomePage() {
     return () => clearInterval(interval)
   }, [bgIndex])
 
-  // Relógio
   useEffect(() => {
     const tick = () => {
       const now = new Date()
-      setTime(now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }))
+      setTime(now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }))
       setDate(now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }))
     }
     tick()
-    const i = setInterval(tick, 1000)
-    return () => clearInterval(i)
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
   }, [])
 
-  // Idle mode (30s sem interação)
-  useEffect(() => {
-    const resetIdle = () => {
-      setIdle(false)
-      if (idleTimer) clearTimeout(idleTimer)
-      const t = setTimeout(() => setIdle(true), 30000)
-      setIdleTimer(t)
-    }
-    resetIdle()
-    window.addEventListener("touchstart", resetIdle)
-    window.addEventListener("mousemove", resetIdle)
-    window.addEventListener("click", resetIdle)
-    return () => {
-      window.removeEventListener("touchstart", resetIdle)
-      window.removeEventListener("mousemove", resetIdle)
-      window.removeEventListener("click", resetIdle)
-    }
-  }, [])
+  const BUTTONS = [
+    {
+      href: "/totem/checkin",
+      icon: IconPlayerPlay,
+      iconColor: "#ffffff",
+      bg: "#5555cc",
+      label: t.btnCheckin,
+      sub: t.btnCheckinSub,
+    },
+    {
+      href: "/totem/cadastro",
+      icon: IconId,
+      iconColor: "#6ee7b7",
+      bg: "#0f6e56",
+      label: t.btnEnroll,
+      sub: t.btnEnrollSub,
+    },
+    {
+      href: "/totem/treinos",
+      icon: IconClipboardList,
+      iconColor: "#fbbf24",
+      bg: "#854F0B",
+      label: t.btnWorkout,
+      sub: t.btnWorkoutSub,
+    },
+  ]
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black select-none">
+    <div style={{ position: "relative", width: "100%", minHeight: "100vh", overflow: "hidden", background: "#000" }}>
 
-      {/* ── BACKGROUND SLIDESHOW ── */}
+      {/* BACKGROUND SLIDESHOW */}
       {BG_IMAGES.map((src, i) => (
         <div
           key={src}
-          className="absolute inset-0 bg-cover bg-center transition-opacity"
           style={{
+            position: "absolute",
+            inset: 0,
             backgroundImage: `url(${src})`,
-            opacity: i === bgIndex ? 1 : (i === prevIndex ? (transitioning ? 0 : 1) : 0),
-            transitionDuration: "1200ms",
-            zIndex: i === bgIndex ? 1 : (i === prevIndex ? 0 : -1),
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: i === bgIndex ? 1 : i === prevIndex ? (transitioning ? 0 : 1) : 0,
+            transition: "opacity 1200ms",
+            zIndex: i === bgIndex ? 1 : i === prevIndex ? 0 : -1,
           }}
         />
       ))}
 
-      {/* ── OVERLAY GRADIENTES ── */}
-      <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/80 via-black/50 to-black/90" />
-      <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/60 via-transparent to-black/60" />
+      {/* OVERLAYS */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.85) 100%)" }} />
+      <div style={{ position: "absolute", inset: 0, zIndex: 10, background: "linear-gradient(to right, rgba(0,0,0,0.5), transparent, rgba(0,0,0,0.5))" }} />
 
-      {/* ── PARTÍCULAS / SCANLINES ── */}
-      <div className="absolute inset-0 z-10 opacity-[0.03]"
-        style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,1) 2px, rgba(255,255,255,1) 4px)" }} />
+      {/* CONTEÚDO */}
+      <div style={{ position: "relative", zIndex: 20, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: "0 1rem" }}>
+        <div style={{ width: "100%", maxWidth: 900, display: "flex", flexDirection: "column", flex: 1 }}>
 
-      {/* ── IDLE MODE: Tela de atratividade ── */}
-      {idle && (
-        <div
-          className="absolute inset-0 z-50 flex flex-col items-center justify-center cursor-pointer"
-          onClick={() => setIdle(false)}
-          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
-        >
-          <div className="text-center animate-pulse">
-            <div className="mb-6">
-              <div
-                className="w-28 h-28 mx-auto rounded-full border-4 border-white/20 flex items-center justify-center"
-                style={{ background: "radial-gradient(circle, rgba(99,102,241,0.4), transparent)" }}
-              >
-                <Dumbbell className="w-14 h-14 text-white/80" />
-              </div>
-            </div>
-            <p className="text-5xl font-black text-white tracking-tight mb-2">TOQUE PARA COMEÇAR</p>
-            <p className="text-white/50 text-xl">Autoatendimento disponível 24 horas</p>
-          </div>
-
-          {/* Rings animados */}
-          {[1, 2, 3].map(n => (
-            <div
-              key={n}
-              className="absolute rounded-full border border-indigo-400/20 animate-ping"
-              style={{
-                width: `${n * 180}px`,
-                height: `${n * 180}px`,
-                animationDelay: `${n * 0.4}s`,
-                animationDuration: "2.5s",
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* ── CONTEÚDO PRINCIPAL ── */}
-      <div className="relative z-20 flex flex-col h-full px-8 py-8">
-
-        {/* TOP BAR */}
-        <div className="flex items-start justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl border border-white/20 backdrop-blur-sm"
-              style={{ background: "rgba(99,102,241,0.3)" }}>
-              <Dumbbell className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <div className="text-white font-black text-3xl tracking-tight leading-none">
-                YMCA<span className="text-indigo-400"> of Central Texas</span>
-              </div>
-              <div className="text-white/50 text-sm font-medium tracking-widest uppercase">Control</div>
-            </div>
-          </div>
-
-          {/* Relógio */}
-          <div className="text-right">
-            <div className="text-white font-black text-5xl leading-none tabular-nums tracking-tight">
-              {time}
-            </div>
-            <div className="text-white/60 text-sm mt-1 capitalize">{date}</div>
-          </div>
-        </div>
-
-        {/* HERO TEXT */}
-        <div className="mt-auto mb-0 flex-1 flex flex-col justify-center">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/20 backdrop-blur-sm mb-6"
-              style={{ background: "rgba(255,255,255,0.08)" }}>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/80 text-sm font-medium">Academia aberta agora · 247 membros ativos</span>
-            </div>
-
-            <h1 className="text-5xl font-black text-white leading-[0.95] tracking-tight mb-4">
-              SEU TREINO<br />
-              <span className="text-transparent"
-                style={{ WebkitTextStroke: "2px rgba(255,255,255,0.4)" }}>
-                COMEÇA
-              </span>{" "}
-              <span className="text-indigo-400">AQUI.</span>
-            </h1>
-
-            <p className="text-white/60 text-base font-light max-w-lg leading-relaxed">
-              Faça check-in, acesse sua ficha de treino ou se matricule agora mesmo — sem espera, sem fila.
-            </p>
-          </div>
-        </div>
-
-        {/* STATS BAR */}
-        <div className="flex gap-6 mb-4">
-          {STATS.map(({ icon: Icon, label, value }) => (
-            <div key={label} className="flex items-center gap-3">
-              <div className="p-2 rounded-xl border border-white/10"
-                style={{ background: "rgba(255,255,255,0.06)" }}>
-                <Icon className="w-5 h-5 text-indigo-300" />
+          {/* HEADER */}
+          <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1.5rem 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+            {/* Logo */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(124,124,255,0.25)", border: "1px solid rgba(124,124,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IconBarbell size={24} color="#7c7cff" />
               </div>
               <div>
-                <div className="text-white font-bold text-xl leading-none">{value}</div>
-                <div className="text-white/40 text-xs mt-0.5">{label}</div>
+                <div style={{ color: "#ffffff", fontWeight: 800, fontSize: "1.1rem", lineHeight: 1 }}>
+                  YMCA <span style={{ color: "#7c7cff" }}>of Central Texas</span>
+                </div>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginTop: 2 }}>
+                  {t.tagline}
+                </div>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* ACTION BUTTONS */}
-        <div className="flex flex-col gap-3 pb-2">
-          {ACTIONS.map((action) => (
-            <Link key={action.href} href={action.href} className="group">
-              <div
-                className="relative overflow-hidden rounded-2xl px-6 py-5 cursor-pointer flex items-center gap-5 transition-all duration-200 group-hover:scale-[1.02] group-active:scale-[0.97]"
-                style={{ boxShadow: "0 8px 32px -6px rgba(0,0,0,0.5)" }}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-r ${action.color} opacity-90`} />
-                <div className="absolute inset-0 bg-gradient-to-r from-white/15 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10" />
+            {/* Centro: seletor de idioma */}
+            <LangSwitcher />
 
-                <div className="relative z-10 p-3 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0">
-                  <action.icon className="w-7 h-7 text-white" />
-                </div>
-
-                <div className="relative z-10 flex-1 min-w-0">
-                  <h2 className="text-white font-black text-xl leading-tight">{action.label}</h2>
-                  <p className="text-white/70 text-sm mt-0.5 truncate">{action.desc}</p>
-                </div>
-
-                <ChevronRight className="relative z-10 w-6 h-6 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" />
+            {/* Relógio */}
+            <div style={{ textAlign: "right" }}>
+              <div style={{ color: "#ffffff", fontWeight: 800, fontSize: "2rem", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                {time}
               </div>
-            </Link>
-          ))}
-        </div>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", marginTop: 4, textTransform: "capitalize" }}>
+                {date}
+              </div>
+            </div>
+          </header>
 
-        {/* FOOTER */}
-        <div className="flex items-center justify-between mt-6 pt-5 border-t border-white/10">
-          <p className="text-white/30 text-xs">Toque em qualquer opção para começar</p>
-          <div className="flex gap-1.5">
-            {BG_IMAGES.map((_, i) => (
-              <div key={i} className={`h-1 rounded-full transition-all duration-500 ${i === bgIndex ? "w-6 bg-white/60" : "w-1.5 bg-white/20"}`} />
-            ))}
+          {/* HERO */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", paddingTop: "2.5rem" }}>
+
+            {/* Ícone central */}
+            <div style={{ position: "relative", marginBottom: "2rem" }}>
+              <div style={{ width: 120, height: 120, borderRadius: "50%", background: "rgba(124,124,255,0.15)", border: "2px solid rgba(124,124,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <IconBarbell size={56} color="#7c7cff" />
+              </div>
+              <div style={{ position: "absolute", inset: -12, borderRadius: "50%", border: "1px solid rgba(124,124,255,0.12)", pointerEvents: "none" }} />
+            </div>
+
+            {/* Título */}
+            <h1 style={{ color: "#ffffff", fontSize: "2.5rem", fontWeight: 900, textAlign: "center", margin: "0 0 2.5rem", lineHeight: 1.1, textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>
+              {t.heroTitle} <span style={{ color: "#7c7cff" }}>{t.heroHighlight}</span>
+            </h1>
+
+            {/* BOTÕES */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, width: "100%", marginBottom: "2.5rem" }}>
+              {BUTTONS.map((btn) => (
+                <Link key={btn.href} href={btn.href} style={{ textDecoration: "none" }}>
+                  <div
+                    style={{ background: btn.bg, borderRadius: 20, padding: "2rem 1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", cursor: "pointer", transition: "transform 0.15s" }}
+                    onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.03)")}
+                    onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+                    onMouseDown={e => (e.currentTarget.style.transform = "scale(0.97)")}
+                    onMouseUp={e => (e.currentTarget.style.transform = "scale(1.03)")}
+                  >
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <btn.icon size={28} color={btn.iconColor} />
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ color: "#ffffff", fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>
+                        {btn.label}
+                      </div>
+                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", marginTop: 6, lineHeight: 1.4 }}>
+                        {btn.sub}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* RODAPÉ */}
+            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.8rem", textAlign: "center", marginBottom: "2rem" }}>
+              {t.footerHint}
+            </p>
           </div>
-          <p className="text-white/30 text-xs">YMCA of Central Texas v1.0</p>
+
         </div>
       </div>
     </div>
