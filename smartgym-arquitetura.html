@@ -1,0 +1,1481 @@
+1<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartGym Control — Arquitetura do Sistema</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #e0e7ff;
+      --accent: #10b981;
+      --accent-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: var(--gray-800);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ── CAPA ── */
+    .cover {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4f46e5 70%, #6366f1 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-align: center;
+      padding: 60px 40px;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.08);
+      top: -200px; right: -200px;
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.06);
+      bottom: -100px; left: -100px;
+    }
+
+    .cover-badge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 100px;
+      padding: 6px 18px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      backdrop-filter: blur(10px);
+    }
+
+    .cover-logo {
+      font-size: 52px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #fff 0%, #c7d2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cover-logo span {
+      background: linear-gradient(90deg, #a5b4fc 0%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cover-subtitle {
+      font-size: 18px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 48px;
+      letter-spacing: 0.5px;
+    }
+
+    .cover-divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #a5b4fc, #34d399);
+      border-radius: 2px;
+      margin: 0 auto 48px;
+    }
+
+    .cover-meta {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cover-meta-item {
+      text-align: center;
+    }
+
+    .cover-meta-item .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 4px;
+    }
+
+    .cover-meta-item .value {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .cover-modules {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 48px 0;
+      max-width: 700px;
+    }
+
+    .cover-module {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 12px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+    }
+
+    .cover-module .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+    /* ── LAYOUT PRINCIPAL ── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 60px 48px;
+    }
+
+    /* ── CABEÇALHO DE SEÇÃO ── */
+    .section {
+      margin-bottom: 52px;
+      page-break-inside: avoid;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--gray-100);
+    }
+
+    .section-number {
+      width: 36px; height: 36px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .section-desc {
+      font-size: 12px;
+      color: var(--gray-400);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    /* ── INTRO CARD ── */
+    .intro-card {
+      background: linear-gradient(135deg, var(--primary-light) 0%, #ede9fe 100%);
+      border: 1px solid #c7d2fe;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+
+    .intro-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+    }
+
+    .intro-card p {
+      color: var(--gray-700);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ── DIAGRAMA ── */
+    .diagram-wrapper {
+      background: var(--gray-900);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+
+    .diagram-title {
+      color: #a5b4fc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .diagram-layer {
+      margin-bottom: 16px;
+    }
+
+    .diagram-layer-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .diagram-boxes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .d-box {
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      line-height: 1.5;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .d-box.client   { background: #1e3a5f; border: 1px solid #2563eb; color: #93c5fd; }
+    .d-box.gateway  { background: #1a1a2e; border: 1px solid #7c3aed; color: #c4b5fd; }
+    .d-box.service  { background: #0f2418; border: 1px solid #059669; color: #6ee7b7; }
+    .d-box.data     { background: #1c1007; border: 1px solid #d97706; color: #fcd34d; }
+    .d-box.infra    { background: #1a0f0f; border: 1px solid #dc2626; color: #fca5a5; }
+    .d-box.ext      { background: #1a1a1a; border: 1px solid #6b7280; color: #d1d5db; }
+
+    .d-box strong { display: block; font-size: 12px; margin-bottom: 4px; }
+    .d-box ul { padding-left: 14px; }
+    .d-box ul li { font-size: 10px; opacity: 0.85; }
+
+    .d-arrow {
+      text-align: center;
+      color: #4b5563;
+      font-size: 18px;
+      margin: 6px 0;
+      font-family: monospace;
+    }
+
+    /* ── TABELAS ── */
+    .table-wrapper { overflow-x: auto; margin-bottom: 24px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    thead th {
+      background: var(--gray-900);
+      color: #fff;
+      padding: 11px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    thead th:first-child { border-radius: 8px 0 0 0; }
+    thead th:last-child  { border-radius: 0 8px 0 0; }
+
+    tbody tr:nth-child(even) { background: var(--gray-50); }
+    tbody tr:hover { background: var(--primary-light); }
+
+    tbody td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--gray-200);
+      color: var(--gray-700);
+      vertical-align: top;
+    }
+
+    tbody td:first-child { font-weight: 600; color: var(--gray-900); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 100px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-purple { background: var(--primary-light); color: var(--primary-dark); }
+    .badge-green  { background: var(--accent-light);  color: #065f46; }
+    .badge-yellow { background: var(--warning-light); color: #92400e; }
+    .badge-gray   { background: var(--gray-100);      color: var(--gray-600); }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .cards-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .cards-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .card {
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 18px;
+      background: #fff;
+    }
+
+    .card-icon { font-size: 24px; margin-bottom: 10px; }
+    .card-title { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+    .card-body { font-size: 11.5px; color: var(--gray-600); line-height: 1.6; }
+
+    .card.purple { border-color: #c7d2fe; background: var(--primary-light); }
+    .card.green  { border-color: #a7f3d0; background: var(--accent-light); }
+    .card.yellow { border-color: #fde68a; background: var(--warning-light); }
+
+    /* ── MÓDULOS TREE ── */
+    .module-tree {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .module-tree .root { color: var(--primary-dark); font-weight: 700; font-size: 14px; }
+    .module-tree .l1   { color: var(--gray-800); font-weight: 600; margin-left: 20px; }
+    .module-tree .l2   { color: var(--gray-500); margin-left: 40px; font-size: 11px; }
+
+    /* ── TIMELINE ── */
+    .timeline { position: relative; padding-left: 32px; }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 9px; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--gray-200);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -27px;
+      top: 5px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    .timeline-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      margin-bottom: 2px;
+    }
+
+    .timeline-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .timeline-body {
+      font-size: 11.5px;
+      color: var(--gray-600);
+    }
+
+    /* ── ROLES ── */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .role-card {
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid transparent;
+    }
+
+    .role-card .role-name { font-weight: 700; font-size: 12px; margin-bottom: 6px; }
+    .role-card ul { padding-left: 14px; }
+    .role-card li { font-size: 11px; line-height: 1.7; }
+
+    .role-superadmin { background: #fdf2f8; border-color: #f9a8d4; }
+    .role-superadmin .role-name { color: #9d174d; }
+    .role-owner { background: #eff6ff; border-color: #93c5fd; }
+    .role-owner .role-name { color: #1d4ed8; }
+    .role-manager { background: var(--primary-light); border-color: #c7d2fe; }
+    .role-manager .role-name { color: var(--primary-dark); }
+    .role-instructor { background: var(--accent-light); border-color: #6ee7b7; }
+    .role-instructor .role-name { color: #065f46; }
+    .role-reception { background: var(--warning-light); border-color: #fcd34d; }
+    .role-reception .role-name { color: #92400e; }
+    .role-student { background: var(--gray-50); border-color: var(--gray-200); }
+    .role-student .role-name { color: var(--gray-700); }
+
+    /* ── CODE BLOCK ── */
+    .code-block {
+      background: var(--gray-900);
+      border-radius: 10px;
+      padding: 20px 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #e5e7eb;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    .code-block .kw  { color: #c084fc; }
+    .code-block .fn  { color: #60a5fa; }
+    .code-block .str { color: #34d399; }
+    .code-block .cm  { color: #6b7280; font-style: italic; }
+    .code-block .tp  { color: #fbbf24; }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      background: var(--gray-900);
+      border-radius: 12px;
+      padding: 18px;
+      color: #fff;
+      text-align: center;
+    }
+
+    .kpi-card .kpi-value { font-size: 28px; font-weight: 800; color: #a5b4fc; }
+    .kpi-card .kpi-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      background: var(--gray-900);
+      color: var(--gray-400);
+      text-align: center;
+      padding: 32px 48px;
+      font-size: 11px;
+      margin-top: 60px;
+    }
+
+    .footer strong { color: var(--gray-200); }
+
+    /* ── PAGE BREAKS ── */
+    .page-break { page-break-before: always; padding-top: 48px; }
+
+    /* ── PRINT ── */
+    @media print {
+      body { font-size: 12px; }
+      .cover { min-height: auto; padding: 80px 60px; }
+      .page { padding: 40px 48px; }
+      .no-print { display: none; }
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+
+    /* ── SEPARADOR ── */
+    hr.section-sep {
+      border: none;
+      border-top: 1px solid var(--gray-100);
+      margin: 40px 0;
+    }
+
+    .highlight-box {
+      border-left: 4px solid var(--primary);
+      background: var(--primary-light);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 12.5px;
+      color: var(--gray-700);
+    }
+
+    .highlight-box strong { color: var(--primary-dark); }
+
+    .tag {
+      display: inline-block;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 10.5px;
+      font-family: 'JetBrains Mono', monospace;
+      margin: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ CAPA ═══════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">Documentação Técnica — v1.0</div>
+
+  <div class="cover-logo">Smart<span>Gym</span> Control</div>
+  <div class="cover-subtitle">Plataforma SaaS para Gestão de Academias</div>
+  <div class="cover-divider"></div>
+
+  <div class="cover-modules">
+    <div class="cover-module"><span class="icon">🏋️</span>Portal Admin</div>
+    <div class="cover-module"><span class="icon">📱</span>App Mobile</div>
+    <div class="cover-module"><span class="icon">🖥️</span>Totem</div>
+    <div class="cover-module"><span class="icon">📊</span>Dashboard BI</div>
+    <div class="cover-module"><span class="icon">🔐</span>Acesso QR</div>
+    <div class="cover-module"><span class="icon">💰</span>Financeiro</div>
+    <div class="cover-module"><span class="icon">🤖</span>IA Retenção</div>
+    <div class="cover-module"><span class="icon">🏢</span>Multi-Unidades</div>
+    <div class="cover-module"><span class="icon">📋</span>Treinos</div>
+    <div class="cover-module"><span class="icon">🔔</span>Notificações</div>
+  </div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">Versão</div>
+      <div class="value">1.0.0 — Alpha</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Data</div>
+      <div class="value">Junho 2026</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Tipo</div>
+      <div class="value">SaaS Multi-Tenant</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Fase</div>
+      <div class="value">Planejamento / Etapa 1</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ CONTEÚDO ═══════════════════════════ -->
+<div class="page">
+
+  <!-- ── 1. VISÃO GERAL ── -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-number">01</div>
+      <div>
+        <div class="section-title">Visão Geral do Projeto</div>
+        <div class="section-desc">Objetivo, escopo e proposta de valor</div>
+      </div>
+    </div>
+
+    <div class="intro-card">
+      <h3>O que é o SmartGym Control?</h3>
+      <p>
+        O <strong>SmartGym Control</strong> é uma plataforma SaaS (Software as a Service) completa para gestão de academias,
+        desenvolvida para atender desde pequenas academias independentes até grandes redes e franquias com múltiplas unidades.
+        A plataforma integra em um único ecossistema: controle de acesso por QR Code, gestão financeira com cobranças automáticas,
+        aplicativo mobile para alunos, totem de autoatendimento, fichas de treino digitais, agendamento de aulas,
+        dashboard gerencial com BI em tempo real e inteligência artificial para prevenção de churn (retenção de alunos).
+      </p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-value">10</div><div class="kpi-label">Módulos do Sistema</div></div>
+      <div class="kpi-card"><div class="kpi-value">4</div><div class="kpi-label">Interfaces (Web, App, Totem, BI)</div></div>
+      <div class="kpi-card"><div class="kpi-value">6</div><div class="kpi-label">Roles de Acesso</div></div>
+      <div class="kpi-card"><div class="kpi-value">∞</div><div class="kpi-label">Unidades por Tenant</div></div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card purple">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">Problema que Resolve</div>
+        <div class="card-body">Academias utilizam múltiplos sistemas desconectados: um para financeiro, outro para treinos, outro para acesso — gerando retrabalho, inconsistência e perda de dados.</div>
+      </div>
+      <div class="card green">
+        <div class="card-icon">✅</div>
+        <div class="card-title">Nossa Solução</div>
+        <div class="card-body">Uma única plataforma integrada que centraliza toda a operação da academia, desde o cadastro do aluno até a cobrança automática e controle de catraca.</div>
+      </div>
+      <div class="card yellow">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">Diferencial</div>
+        <div class="card-body">IA para previsão de churn com alertas proativos, totem de autoatendimento para reduzir filas na recepção e app mobile completo para o aluno.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-sep" />
+
+  <!-- ── 2. ARQUITETURA GERAL ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">02</div>
+      <div>
+        <div class="section-title">Arquitetura do Sistema</div>
+        <div class="section-desc">Visão macro de todos os componentes e camadas</div>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      A arquitetura segue o padrão <strong>Microservices + API Gateway</strong>, com frontend desacoplado do backend,
+      comunicação via REST e WebSocket, banco de dados multi-tenant com Row Level Security, e filas assíncronas para
+      operações de alta latência (notificações, cobranças, IA).
+    </div>
+
+    <div class="diagram-wrapper">
+      <div class="diagram-title">// SmartGym Control — Architecture Overview</div>
+
+      <div class="diagram-layer">
+        <div class="diagram-layer-title" style="color: #93c5fd;">[ Camada 1 — Clientes / Frontends ]</div>
+        <div class="diagram-boxes">
+          <div class="d-box client">
+            <strong>Portal Admin</strong>
+            <ul>
+              <li>Next.js 14 (App Router)</li>
+              <li>Gestão completa</li>
+              <li>Financeiro + Alunos</li>
+              <li>Controle de acesso</li>
+            </ul>
+          </div>
+          <div class="d-box client">
+            <strong>App Mobile Aluno</strong>
+            <ul>
+              <li>React Native + Expo</li>
+              <li>Check-in QR Code</li>
+              <li>Treinos + Evolução</li>
+              <li>Financeiro pessoal</li>
+            </ul>
+          </div>
+          <div class="d-box client">
+            <strong>Totem Self-Service</strong>
+            <ul>
+              <li>Next.js PWA / Touch</li>
+              <li>Check-in + Cadastro</li>
+              <li>Pagamento (TEF)</li>
+              <li>Renovação de plano</li>
+            </ul>
+          </div>
+          <div class="d-box client">
+            <strong>Dashboard Gerencial</strong>
+            <ul>
+              <li>Next.js 14</li>
+              <li>KPIs em tempo real</li>
+              <li>Multi-unidades</li>
+              <li>IA Insights</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-arrow">▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼</div>
+
+      <div class="diagram-layer">
+        <div class="diagram-layer-title" style="color: #c4b5fd;">[ Camada 2 — API Gateway ]</div>
+        <div class="diagram-boxes">
+          <div class="d-box gateway" style="flex: none; width: 100%;">
+            <strong>Kong / AWS API Gateway</strong>
+            &nbsp;&nbsp;•&nbsp; Rate Limiting &nbsp;&nbsp;•&nbsp; JWT/OAuth2 Auth &nbsp;&nbsp;•&nbsp; SSL Termination &nbsp;&nbsp;•&nbsp; Load Balancing &nbsp;&nbsp;•&nbsp; Request Logging &nbsp;&nbsp;•&nbsp; CORS
+          </div>
+        </div>
+      </div>
+
+      <div class="d-arrow">▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼</div>
+
+      <div class="diagram-layer">
+        <div class="diagram-layer-title" style="color: #6ee7b7;">[ Camada 3 — Backend Services (NestJS / Node.js 20) ]</div>
+        <div class="diagram-boxes">
+          <div class="d-box service"><strong>Auth Service</strong><ul><li>JWT + Refresh</li><li>OAuth2 Social</li><li>2FA (TOTP)</li><li>RBAC</li></ul></div>
+          <div class="d-box service"><strong>Member Service</strong><ul><li>CRUD Alunos</li><li>Matrículas</li><li>Planos</li><li>Documentos</li></ul></div>
+          <div class="d-box service"><strong>Finance Service</strong><ul><li>Mensalidades</li><li>Inadimplência</li><li>Cobranças Auto</li><li>NF-e / NFS-e</li></ul></div>
+          <div class="d-box service"><strong>Access Service</strong><ul><li>QR Code TTL</li><li>Catraca API</li><li>Log Acessos</li><li>Biometria</li></ul></div>
+        </div>
+        <div class="diagram-boxes" style="margin-top: 8px;">
+          <div class="d-box service"><strong>Training Service</strong><ul><li>Fichas Treino</li><li>Exercícios</li><li>Avaliação Física</li><li>Evolução</li></ul></div>
+          <div class="d-box service"><strong>Schedule Service</strong><ul><li>Agendamentos</li><li>Aulas em Grupo</li><li>Instrutores</li><li>Capacidade</li></ul></div>
+          <div class="d-box service"><strong>Notification Svc</strong><ul><li>Push (FCM/APNs)</li><li>WhatsApp API</li><li>E-mail (SES)</li><li>SMS</li></ul></div>
+          <div class="d-box service"><strong>AI Service</strong><ul><li>Churn Prediction</li><li>Retenção</li><li>Recomendação</li><li>Insights BI</li></ul></div>
+        </div>
+        <div class="diagram-boxes" style="margin-top: 8px;">
+          <div class="d-box service"><strong>Unit Service</strong><ul><li>Multi-tenant</li><li>Franquias</li><li>Config/Unidade</li></ul></div>
+          <div class="d-box service"><strong>Report Service</strong><ul><li>Analytics</li><li>Exportação PDF</li><li>OLAP / Views</li></ul></div>
+        </div>
+      </div>
+
+      <div class="d-arrow">▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼</div>
+
+      <div class="diagram-layer">
+        <div class="diagram-layer-title" style="color: #fcd34d;">[ Camada 4 — Dados & Mensageria ]</div>
+        <div class="diagram-boxes">
+          <div class="d-box data"><strong>PostgreSQL 16</strong><ul><li>Multi-tenant RLS</li><li>Audit logs</li><li>Full-text search</li></ul></div>
+          <div class="d-box data"><strong>Redis 7</strong><ul><li>Cache / Sessões</li><li>QR Code TTL</li><li>Pub/Sub WS</li></ul></div>
+          <div class="d-box data"><strong>Blob Storage (S3)</strong><ul><li>Fotos alunos</li><li>Documentos</li><li>Fichas PDF</li></ul></div>
+          <div class="d-box data"><strong>BullMQ (Filas)</strong><ul><li>Notificações</li><li>Cobranças</li><li>E-mails batch</li></ul></div>
+        </div>
+      </div>
+
+      <div class="d-arrow">▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼</div>
+
+      <div class="diagram-layer">
+        <div class="diagram-layer-title" style="color: #d1d5db;">[ Camada 5 — Integrações Externas ]</div>
+        <div class="diagram-boxes">
+          <div class="d-box ext"><strong>Pagamento</strong><ul><li>Stripe / Asaas</li><li>Pagar.me / Pix</li><li>Cielo TEF</li></ul></div>
+          <div class="d-box ext"><strong>Comunicação</strong><ul><li>WhatsApp Evo</li><li>AWS SES / Resend</li><li>Firebase FCM</li></ul></div>
+          <div class="d-box ext"><strong>Fiscal</strong><ul><li>SEFAZ NF-e</li><li>Prefeitura NFS-e</li><li>Contador API</li></ul></div>
+          <div class="d-box ext"><strong>Hardware</strong><ul><li>Controlid</li><li>Hikvision</li><li>Catraca Serial</li></ul></div>
+          <div class="d-box ext"><strong>IA / ML</strong><ul><li>OpenAI GPT-4</li><li>Google Gemini</li><li>Scikit-learn</li></ul></div>
+        </div>
+      </div>
+
+      <div class="d-arrow">▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼</div>
+
+      <div class="diagram-layer">
+        <div class="diagram-layer-title" style="color: #fca5a5;">[ Camada 6 — Infraestrutura / DevOps ]</div>
+        <div class="diagram-boxes">
+          <div class="d-box infra"><strong>Frontend</strong><ul><li>Vercel (Edge)</li><li>Cloudflare CDN</li></ul></div>
+          <div class="d-box infra"><strong>Backend</strong><ul><li>Railway / Render</li><li>Docker Compose</li></ul></div>
+          <div class="d-box infra"><strong>Banco de Dados</strong><ul><li>Supabase (PG)</li><li>Redis Cloud</li></ul></div>
+          <div class="d-box infra"><strong>CI/CD & Monitor</strong><ul><li>GitHub Actions</li><li>Sentry / Datadog</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. STACK TECNOLÓGICA ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">03</div>
+      <div>
+        <div class="section-title">Stack Tecnológica</div>
+        <div class="section-desc">Tecnologias escolhidas por camada e justificativa</div>
+      </div>
+    </div>
+
+    <p style="margin-bottom: 20px; color: var(--gray-600);">
+      A stack foi escolhida priorizando: <strong>produtividade de desenvolvimento</strong>,
+      <strong>type safety end-to-end</strong>, <strong>ecossistema maduro</strong> e
+      <strong>custo de infraestrutura baixo</strong> para o early stage.
+    </p>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 12px;">
+      Frontend Web — Portal Administrativo & Dashboard Gerencial
+    </h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Camada</th><th>Tecnologia</th><th>Versão</th><th>Justificativa</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Framework</td><td>Next.js (App Router)</td><td>14+</td><td>SSR, performance, file-based routing, Server Components</td></tr>
+          <tr><td>Componentes UI</td><td>shadcn/ui + Radix UI</td><td>latest</td><td>Acessível, headless, customizável com Tailwind</td></tr>
+          <tr><td>Estilização</td><td>Tailwind CSS</td><td>3.x</td><td>Utilidade-first, produtividade, consistência visual</td></tr>
+          <tr><td>Estado Global</td><td>Zustand</td><td>4.x</td><td>Simples, sem boilerplate, performático</td></tr>
+          <tr><td>Data Fetching</td><td>TanStack Query (React Query)</td><td>5.x</td><td>Cache, revalidação, loading states automáticos</td></tr>
+          <tr><td>Formulários</td><td>React Hook Form + Zod</td><td>7.x / 3.x</td><td>Validação type-safe, performance sem re-renders</td></tr>
+          <tr><td>Gráficos</td><td>Recharts + Tremor</td><td>latest</td><td>Gráficos ricos para dashboards analíticos</td></tr>
+          <tr><td>Tabelas</td><td>TanStack Table</td><td>8.x</td><td>Virtualização, sorting, filtering, paginação</td></tr>
+          <tr><td>Ícones</td><td>Lucide React</td><td>latest</td><td>Consistente, tree-shakeable, 1400+ ícones</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin: 20px 0 12px;">
+      Aplicativo Mobile — Alunos
+    </h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Camada</th><th>Tecnologia</th><th>Justificativa</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Framework</td><td>React Native + Expo SDK 51</td><td>Code sharing com web, OTA updates, builds na nuvem</td></tr>
+          <tr><td>Navegação</td><td>Expo Router (file-based)</td><td>Deep links, layouts aninhados, type-safe routes</td></tr>
+          <tr><td>QR Code</td><td>expo-camera + expo-barcode-scanner</td><td>Leitura e geração de QR Code nativo</td></tr>
+          <tr><td>Biometria</td><td>expo-local-authentication</td><td>Face ID, Touch ID e biometria Android</td></tr>
+          <tr><td>Push</td><td>Expo Notifications + FCM/APNs</td><td>Notificações push iOS e Android unificadas</td></tr>
+          <tr><td>Offline</td><td>MMKV + WatermelonDB</td><td>Dados offline-first, sync posterior</td></tr>
+          <tr><td>HTTP Client</td><td>Axios + React Query</td><td>Interceptors para auth, cache inteligente</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin: 20px 0 12px;">
+      Totem de Autoatendimento
+    </h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Camada</th><th>Tecnologia</th><th>Detalhe</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Framework</td><td>Next.js PWA</td><td>Roda no browser do totem, sem instalação</td></tr>
+          <tr><td>UI Touch</td><td>Tailwind (fontes XXL, botões grandes)</td><td>Otimizado para toque em telas grandes (21"+)</td></tr>
+          <tr><td>Pagamento</td><td>Cielo / Stone SDK (TEF)</td><td>Integração com maquininha física via SDK serial/USB</td></tr>
+          <tr><td>QR Reader</td><td>Webcam API + ZXing JS</td><td>Leitura de QR Code via câmera USB do totem</td></tr>
+          <tr><td>Kiosk Mode</td><td>Electron (opcional)</td><td>Trava o sistema operacional no app, sem acesso ao SO</td></tr>
+          <tr><td>Idle Screen</td><td>Canvas API + GSAP</td><td>Tela de atratividade quando inativo</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin: 20px 0 12px;">
+      Backend — API Services
+    </h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Camada</th><th>Tecnologia</th><th>Versão</th><th>Justificativa</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Runtime</td><td>Node.js LTS</td><td>20.x</td><td>Ecossistema maduro, I/O assíncrono</td></tr>
+          <tr><td>Framework</td><td>NestJS</td><td>10.x</td><td>Modular, DI nativo, decorators, enterprise-grade</td></tr>
+          <tr><td>API Style</td><td>REST + WebSocket</td><td>—</td><td>REST para CRUD, WS para eventos em tempo real</td></tr>
+          <tr><td>ORM</td><td>Prisma</td><td>5.x</td><td>Type-safe, migrations versionadas, excelente DX</td></tr>
+          <tr><td>Validação</td><td>class-validator + Zod</td><td>—</td><td>Dupla camada: decorators NestJS + parsing runtime</td></tr>
+          <tr><td>Auth</td><td>Passport.js + JWT</td><td>—</td><td>Estratégias múltiplas, flexível, RBAC custom</td></tr>
+          <tr><td>Filas</td><td>BullMQ (Redis)</td><td>5.x</td><td>Jobs robustos, retry, delay, cron jobs</td></tr>
+          <tr><td>Testes</td><td>Jest + Supertest</td><td>—</td><td>Unitários + integração + e2e</td></tr>
+          <tr><td>Docs API</td><td>Swagger / OpenAPI 3</td><td>—</td><td>Documentação automática dos endpoints</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 4. BANCO DE DADOS ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">04</div>
+      <div>
+        <div class="section-title">Banco de Dados & Estratégia de Dados</div>
+        <div class="section-desc">Multi-tenancy, cache, storage e mensageria</div>
+      </div>
+    </div>
+
+    <div class="cards-grid cards-grid-2" style="margin-bottom: 28px;">
+      <div class="card">
+        <div class="card-icon">🐘</div>
+        <div class="card-title">PostgreSQL 16 — Banco Principal</div>
+        <div class="card-body">
+          Hospedado no <strong>Supabase</strong>. Armazena todos os dados relacionais: tenants, alunos, planos,
+          matrículas, pagamentos, acessos, treinos, agendamentos.
+          Utiliza <strong>Row Level Security (RLS)</strong> para isolamento total entre tenants.
+          Full-text search nativo com <code>tsquery/tsvector</code>.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Redis 7 — Cache & Tempo Real</div>
+        <div class="card-body">
+          Cache de sessões JWT, TTL de QR Codes (validade 24h por padrão),
+          rate limiting por IP/tenant, Pub/Sub para WebSocket em tempo real
+          (eventos de catraca, check-in ao vivo no painel), e como broker do BullMQ.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📦</div>
+        <div class="card-title">S3 / Supabase Storage — Arquivos</div>
+        <div class="card-body">
+          Fotos de perfil dos alunos, documentos (RG, CPF, contrato),
+          fichas de treino em PDF, laudos médicos, imagens de marketing.
+          Acesso via URLs pré-assinadas com expiração, organizados por <code>tenant_id/tipo/arquivo</code>.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📬</div>
+        <div class="card-title">BullMQ — Filas Assíncronas</div>
+        <div class="card-body">
+          Processamento assíncrono de: envio de e-mails em lote, cobranças automáticas mensais,
+          push notifications agendadas, geração de relatórios pesados,
+          inferência de IA (churn prediction), e webhooks de pagamento.
+        </div>
+      </div>
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 14px;">
+      Estratégia Multi-Tenant — Row Level Security
+    </h4>
+
+    <div class="code-block">
+<span class="cm">-- Cada tabela possui tenant_id. A policy bloqueia acesso cross-tenant automaticamente.</span>
+
+<span class="kw">CREATE TABLE</span> <span class="tp">members</span> (
+  id          <span class="tp">UUID</span>        <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  tenant_id   <span class="tp">UUID</span>        <span class="kw">NOT NULL REFERENCES</span> tenants(id),
+  gym_unit_id <span class="tp">UUID</span>        <span class="kw">REFERENCES</span> gym_units(id),
+  name        <span class="tp">VARCHAR</span>(200) <span class="kw">NOT NULL</span>,
+  email       <span class="tp">VARCHAR</span>(200) <span class="kw">UNIQUE NOT NULL</span>,
+  created_at  <span class="tp">TIMESTAMPTZ</span> <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- Habilitar RLS na tabela</span>
+<span class="kw">ALTER TABLE</span> <span class="tp">members</span> <span class="kw">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cm">-- Policy: cada sessão só enxerga dados do seu tenant</span>
+<span class="kw">CREATE POLICY</span> tenant_isolation <span class="kw">ON</span> <span class="tp">members</span>
+  <span class="kw">USING</span> (tenant_id = current_setting(<span class="str">'app.tenant_id'</span>)::<span class="tp">UUID</span>);
+
+<span class="cm">-- No backend (NestJS), antes de cada query:</span>
+<span class="kw">await</span> prisma.$executeRaw<span class="str">`SET app.tenant_id = '${tenantId}'`</span>;
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin: 20px 0 12px;">
+      Hierarquia de Dados — Multi-Tenant / Multi-Unidade
+    </h4>
+    <div class="code-block">
+<span class="tp">Tenant</span> (Academia / Empresa)
+  └── <span class="tp">GymUnit</span> (Unidade / Filial)
+        ├── <span class="tp">Member</span>        → Alunos matriculados na unidade
+        ├── <span class="tp">Instructor</span>    → Instrutores / Personal Trainers
+        ├── <span class="tp">Plan</span>          → Planos disponíveis (Mensal, Trimestral...)
+        ├── <span class="tp">Enrollment</span>    → Matrícula (Member + Plan + Datas)
+        ├── <span class="tp">Payment</span>       → Pagamentos e cobranças
+        ├── <span class="tp">AccessLog</span>     → Log de entradas/saídas
+        ├── <span class="tp">TrainingSheet</span> → Fichas de treino
+        └── <span class="tp">Schedule</span>      → Aulas agendadas
+    </div>
+  </div>
+
+  <!-- ── 5. MÓDULOS ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">05</div>
+      <div>
+        <div class="section-title">Módulos do Sistema</div>
+        <div class="section-desc">Descrição funcional de cada módulo da plataforma</div>
+      </div>
+    </div>
+
+    <div class="module-tree">
+      <div class="root">📦 SmartGym Control — Módulos</div>
+      <br/>
+      <div class="l1">├── 01. Autenticação &amp; RBAC</div>
+      <div class="l2">├── Login email/senha, OAuth2 (Google, Apple)</div>
+      <div class="l2">├── JWT com Refresh Token (rotação automática)</div>
+      <div class="l2">├── 2FA via TOTP (Google Authenticator)</div>
+      <div class="l2">└── RBAC: SuperAdmin | GymOwner | Manager | Instructor | Receptionist | Student</div>
+      <br/>
+      <div class="l1">├── 02. Gestão de Membros</div>
+      <div class="l2">├── Cadastro completo com foto e documentos</div>
+      <div class="l2">├── Planos e matrículas com vigência</div>
+      <div class="l2">├── Histórico de pagamentos e acessos</div>
+      <div class="l2">└── Status: Ativo | Inativo | Bloqueado | Em Negociação</div>
+      <br/>
+      <div class="l1">├── 03. Controle de Acesso</div>
+      <div class="l2">├── Geração de QR Code único por aluno (TTL 24h)</div>
+      <div class="l2">├── Integração com catracas (Controlid, Hikvision, serial)</div>
+      <div class="l2">├── Log em tempo real no painel (WebSocket)</div>
+      <div class="l2">└── Alertas: inadimplente tentando entrar, plano vencido</div>
+      <br/>
+      <div class="l1">├── 04. Gestão Financeira</div>
+      <div class="l2">├── Planos com preços, descontos e vigência</div>
+      <div class="l2">├── Cobranças automáticas (Pix, cartão, boleto)</div>
+      <div class="l2">├── Gestão de inadimplência com régua de cobrança</div>
+      <div class="l2">├── Emissão de NF-e / NFS-e automática</div>
+      <div class="l2">└── Relatórios: DRE, fluxo de caixa, ticket médio</div>
+      <br/>
+      <div class="l1">├── 05. Gestão de Treinos</div>
+      <div class="l2">├── Fichas de treino digitais com exercícios</div>
+      <div class="l2">├── Banco de exercícios com vídeo e instruções</div>
+      <div class="l2">├── Avaliação física (peso, medidas, % gordura)</div>
+      <div class="l2">└── Gráficos de evolução ao longo do tempo</div>
+      <br/>
+      <div class="l1">├── 06. Agendamentos</div>
+      <div class="l2">├── Aulas em grupo com capacidade máxima</div>
+      <div class="l2">├── Agendamento de personal trainer</div>
+      <div class="l2">├── Avaliações físicas agendadas</div>
+      <div class="l2">└── Lista de espera automática</div>
+      <br/>
+      <div class="l1">├── 07. Totem Self-Service</div>
+      <div class="l2">├── Check-in por QR Code, biometria ou CPF</div>
+      <div class="l2">├── Novo cadastro com pagamento na hora</div>
+      <div class="l2">├── Renovação de plano e segunda via de boleto</div>
+      <div class="l2">└── Maquininha TEF integrada (Cielo/Stone)</div>
+      <br/>
+      <div class="l1">├── 08. Notificações Inteligentes</div>
+      <div class="l2">├── WhatsApp: vencimento, confirmação, boas-vindas</div>
+      <div class="l2">├── Push App: treino do dia, agendamento próximo</div>
+      <div class="l2">├── E-mail: boleto, NF-e, relatórios gerenciais</div>
+      <div class="l2">└── Automações: inatividade 7 dias → mensagem motivacional</div>
+      <br/>
+      <div class="l1">├── 09. Dashboard &amp; Business Intelligence</div>
+      <div class="l2">├── KPIs: total alunos, receita, churn rate, LTV, NPS</div>
+      <div class="l2">├── Ocupação por horário e por unidade</div>
+      <div class="l2">├── Comparativo entre unidades (franquias)</div>
+      <div class="l2">└── Exportação CSV, Excel e PDF</div>
+      <br/>
+      <div class="l1">└── 10. Inteligência Artificial</div>
+      <div class="l2">├── Churn prediction: aluno com risco de cancelar</div>
+      <div class="l2">├── Alerta proativo para a recepção (ligar para o aluno)</div>
+      <div class="l2">├── Recomendação de upgrade de plano baseada em uso</div>
+      <div class="l2">└── Insights automáticos: "Segunda-feira 6h é o horário mais cheio"</div>
+    </div>
+  </div>
+
+  <!-- ── 6. RBAC ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">06</div>
+      <div>
+        <div class="section-title">Controle de Acesso — RBAC</div>
+        <div class="section-desc">Roles, permissões e hierarquia de usuários</div>
+      </div>
+    </div>
+
+    <div class="highlight-box">
+      O sistema utiliza <strong>Role-Based Access Control (RBAC)</strong> com 6 perfis distintos.
+      Cada role define quais recursos e ações o usuário pode acessar, garantindo segurança e separação de responsabilidades.
+    </div>
+
+    <div class="roles-grid">
+      <div class="role-card role-superadmin">
+        <div class="role-name">👑 SuperAdmin</div>
+        <ul>
+          <li>Acesso total à plataforma</li>
+          <li>Gerenciar todos os tenants</li>
+          <li>Configurações globais do SaaS</li>
+          <li>Monitoramento de infraestrutura</li>
+          <li>Suporte a clientes</li>
+        </ul>
+      </div>
+      <div class="role-card role-owner">
+        <div class="role-name">🏢 GymOwner (Dono)</div>
+        <ul>
+          <li>Todas as unidades do seu tenant</li>
+          <li>Configuração de planos e preços</li>
+          <li>Dashboard financeiro completo</li>
+          <li>Criar / gerenciar Managers</li>
+          <li>Relatórios comparativos</li>
+        </ul>
+      </div>
+      <div class="role-card role-manager">
+        <div class="role-name">⚙️ Manager (Gerente)</div>
+        <ul>
+          <li>Gestão da unidade vinculada</li>
+          <li>Gestão de alunos e matrículas</li>
+          <li>Relatórios da unidade</li>
+          <li>Criar instrutores e recepcionistas</li>
+          <li>Sem acesso financeiro global</li>
+        </ul>
+      </div>
+      <div class="role-card role-instructor">
+        <div class="role-name">🏋️ Instructor</div>
+        <ul>
+          <li>Ver alunos sob sua supervisão</li>
+          <li>Criar e editar fichas de treino</li>
+          <li>Avaliações físicas</li>
+          <li>Agenda pessoal</li>
+          <li>Sem acesso financeiro</li>
+        </ul>
+      </div>
+      <div class="role-card role-reception">
+        <div class="role-name">🖥️ Receptionist</div>
+        <ul>
+          <li>Check-in manual de alunos</li>
+          <li>Cadastro de novos alunos</li>
+          <li>Renovação de planos</li>
+          <li>Ver agenda do dia</li>
+          <li>Sem relatórios financeiros</li>
+        </ul>
+      </div>
+      <div class="role-card role-student">
+        <div class="role-name">🎓 Student (Aluno)</div>
+        <ul>
+          <li>App mobile apenas</li>
+          <li>Ver própria ficha de treino</li>
+          <li>QR Code de acesso</li>
+          <li>Histórico de pagamentos</li>
+          <li>Agendar aulas em grupo</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 7. INTEGRAÇÕES ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">07</div>
+      <div>
+        <div class="section-title">Integrações Externas</div>
+        <div class="section-desc">Serviços de terceiros integrados ao ecossistema SmartGym</div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Categoria</th><th>Serviço</th><th>Uso no Sistema</th><th>Prioridade</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>💳 Pagamento</td>
+            <td>Asaas</td>
+            <td>Cobranças recorrentes, Pix automático, boleto, cartão, gestão de inadimplência, webhooks</td>
+            <td><span class="badge badge-purple">Alta — MVP</span></td>
+          </tr>
+          <tr>
+            <td>💳 Pagamento</td>
+            <td>Stripe</td>
+            <td>Assinatura SaaS (billing dos clientes da plataforma), checkout internacional</td>
+            <td><span class="badge badge-purple">Alta — MVP</span></td>
+          </tr>
+          <tr>
+            <td>💬 Mensagens</td>
+            <td>Evolution API (WhatsApp)</td>
+            <td>Notificações automáticas, régua de cobrança, boas-vindas, lembrete de treino</td>
+            <td><span class="badge badge-purple">Alta — MVP</span></td>
+          </tr>
+          <tr>
+            <td>📧 E-mail</td>
+            <td>Resend / AWS SES</td>
+            <td>E-mails transacionais, boletos, NF-e, relatórios, recuperação de senha</td>
+            <td><span class="badge badge-purple">Alta — MVP</span></td>
+          </tr>
+          <tr>
+            <td>📱 Push</td>
+            <td>Firebase FCM + APNs</td>
+            <td>Notificações push no app mobile (Android e iOS)</td>
+            <td><span class="badge badge-green">Média</span></td>
+          </tr>
+          <tr>
+            <td>🏢 Fiscal</td>
+            <td>Focus NFe / Plugnotas</td>
+            <td>Emissão automática de NF-e e NFS-e após pagamento confirmado</td>
+            <td><span class="badge badge-green">Média</span></td>
+          </tr>
+          <tr>
+            <td>🚪 Hardware</td>
+            <td>Controlid / Hikvision</td>
+            <td>Integração com catracas e leitores biométricos via API REST ou TCP/Serial</td>
+            <td><span class="badge badge-green">Média</span></td>
+          </tr>
+          <tr>
+            <td>💰 TEF Totem</td>
+            <td>Cielo / Stone LIO</td>
+            <td>Pagamento presencial no totem via maquininha integrada</td>
+            <td><span class="badge badge-yellow">Futura</span></td>
+          </tr>
+          <tr>
+            <td>🤖 IA</td>
+            <td>OpenAI GPT-4 / Gemini</td>
+            <td>Análise de padrões, sugestões automáticas, chatbot de suporte ao aluno</td>
+            <td><span class="badge badge-yellow">Futura</span></td>
+          </tr>
+          <tr>
+            <td>📊 Analytics</td>
+            <td>PostHog / Mixpanel</td>
+            <td>Tracking de eventos, funil de conversão, análise de uso por feature</td>
+            <td><span class="badge badge-yellow">Futura</span></td>
+          </tr>
+          <tr>
+            <td>🔐 Auth Social</td>
+            <td>Google OAuth2 / Apple Sign-In</td>
+            <td>Login social para alunos no app mobile e portal web</td>
+            <td><span class="badge badge-green">Média</span></td>
+          </tr>
+          <tr>
+            <td>☁️ CDN / DNS</td>
+            <td>Cloudflare</td>
+            <td>CDN global, proteção DDoS, DNS, WAF, cache de assets</td>
+            <td><span class="badge badge-purple">Alta — MVP</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 8. INFRAESTRUTURA ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">08</div>
+      <div>
+        <div class="section-title">Infraestrutura & DevOps</div>
+        <div class="section-desc">Ambientes, deploy, CI/CD e monitoramento</div>
+      </div>
+    </div>
+
+    <div class="cards-grid" style="margin-bottom: 28px;">
+      <div class="card">
+        <div class="card-icon">🖥️</div>
+        <div class="card-title">Frontend — Vercel</div>
+        <div class="card-body">
+          Deploy automático a cada push na branch main. Edge Network global para latência mínima.
+          Preview deployments por Pull Request. Variáveis de ambiente por ambiente (dev/staging/prod).
+          <br/><br/>
+          <span class="tag">next.js</span><span class="tag">edge-functions</span><span class="tag">preview-urls</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">Backend — Railway</div>
+        <div class="card-body">
+          Containers Docker para cada serviço NestJS. Auto-scaling baseado em CPU/memória.
+          Health checks automáticos e restart em falha. Deploy zero-downtime via rolling update.
+          <br/><br/>
+          <span class="tag">docker</span><span class="tag">nestjs</span><span class="tag">auto-scaling</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🗄️</div>
+        <div class="card-title">Database — Supabase</div>
+        <div class="card-body">
+          PostgreSQL 16 gerenciado com backups diários automáticos, point-in-time recovery,
+          réplicas de leitura para relatórios pesados, conexão pooling via PgBouncer.
+          <br/><br/>
+          <span class="tag">postgresql-16</span><span class="tag">rls</span><span class="tag">pgbouncer</span>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 14px;">Pipeline CI/CD — GitHub Actions</h4>
+
+    <div class="code-block">
+<span class="cm"># Pipeline executado a cada Pull Request e push na main</span>
+
+<span class="kw">on:</span> [push, pull_request]
+
+<span class="kw">jobs:</span>
+  <span class="fn">lint-and-typecheck</span>:         <span class="cm"># ESLint + TypeScript compiler</span>
+    <span class="kw">runs-on:</span> ubuntu-latest
+
+  <span class="fn">unit-tests</span>:                  <span class="cm"># Jest — testes unitários</span>
+    <span class="kw">needs:</span> lint-and-typecheck
+
+  <span class="fn">integration-tests</span>:           <span class="cm"># Supertest + Testcontainers (PG real)</span>
+    <span class="kw">needs:</span> unit-tests
+
+  <span class="fn">build-and-push-docker</span>:       <span class="cm"># Build imagem + push para registry</span>
+    <span class="kw">needs:</span> integration-tests
+    <span class="kw">if:</span> github.ref == <span class="str">'refs/heads/main'</span>
+
+  <span class="fn">deploy-staging</span>:              <span class="cm"># Deploy automático em staging</span>
+    <span class="kw">needs:</span> build-and-push-docker
+
+  <span class="fn">deploy-production</span>:           <span class="cm"># Deploy produção (aprovação manual)</span>
+    <span class="kw">needs:</span> deploy-staging
+    <span class="kw">environment:</span> production      <span class="cm"># Requer aprovação no GitHub</span>
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin: 20px 0 12px;">Ambientes</h4>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>Ambiente</th><th>URL</th><th>Trigger</th><th>Banco</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Development</td><td>localhost:3000</td><td>Manual (local)</td><td>Docker Compose local</td></tr>
+          <tr><td>Staging</td><td>staging.smartgym.app</td><td>Push em develop</td><td>Supabase Staging</td></tr>
+          <tr><td>Production</td><td>app.smartgym.app</td><td>Aprovação manual</td><td>Supabase Production</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="font-size: 13px; font-weight: 700; color: var(--gray-900); margin: 20px 0 12px;">Monitoramento & Observabilidade</h4>
+    <div class="cards-grid cards-grid-4">
+      <div class="card">
+        <div class="card-title">🐛 Sentry</div>
+        <div class="card-body">Error tracking em tempo real — frontend e backend. Alertas por Slack/e-mail.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 Datadog</div>
+        <div class="card-body">APM, métricas de infraestrutura, logs centralizados, dashboards de SLA.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">⏱️ Uptime Robot</div>
+        <div class="card-body">Health checks a cada 1 min. Alerta SMS/WhatsApp em downtime.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 PgHero</div>
+        <div class="card-body">Monitoramento de queries lentas, índices faltando, locks no PostgreSQL.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 9. SEGURANÇA ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">09</div>
+      <div>
+        <div class="section-title">Segurança & Conformidade</div>
+        <div class="section-desc">LGPD, OWASP, criptografia e boas práticas</div>
+      </div>
+    </div>
+
+    <div class="cards-grid cards-grid-2">
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <div class="card-title">Autenticação & Autorização</div>
+        <div class="card-body">
+          JWT com expiração curta (15min) + Refresh Token rotativo (7 dias).<br/>
+          2FA via TOTP para accounts sensíveis (GymOwner, Manager).<br/>
+          Bloqueio após 5 tentativas falhas (brute-force protection).<br/>
+          OAuth2 com PKCE para app mobile.<br/>
+          RBAC granular por recurso e ação.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🛡️</div>
+        <div class="card-title">OWASP Top 10</div>
+        <div class="card-body">
+          Prevenção de SQL Injection via ORM (Prisma — queries parametrizadas).<br/>
+          XSS prevention via sanitização e Content-Security-Policy.<br/>
+          CSRF tokens em formulários sensíveis.<br/>
+          Rate limiting por IP e por tenant no API Gateway.<br/>
+          Helmet.js (NestJS) para headers de segurança HTTP.
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔐</div>
+        <div class="card-title">Criptografia & Dados</div>
+        <div class="card-body">
+          Senhas hasheadas com bcrypt (salt rounds: 12).<br/>
+          Dados sensíveis (CPF, dados bancários) criptografados em repouso (AES-256).<br/>
+          HTTPS/TLS 1.3 em todas as comunicações.<br/>
+          Arquivos privados acessíveis apenas via URL pré-assinada (expiração curta).
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚖️</div>
+        <div class="card-title">LGPD — Lei Geral de Proteção de Dados</div>
+        <div class="card-body">
+          Consentimento explícito no cadastro do aluno.<br/>
+          Direito de exclusão: endpoint para "esquecimento" de dados pessoais.<br/>
+          Exportação dos dados do aluno em formato JSON/PDF.<br/>
+          Audit log: toda alteração de dados pessoais é registrada com quem fez e quando.<br/>
+          DPO (Data Protection Officer) configurável por tenant.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 10. ROADMAP ── -->
+  <div class="section page-break">
+    <div class="section-header">
+      <div class="section-number">10</div>
+      <div>
+        <div class="section-title">Roadmap de Desenvolvimento</div>
+        <div class="section-desc">Etapas planejadas, do planejamento ao lançamento</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 1 — Concluída</div>
+        <div class="timeline-title">Planejamento & Arquitetura</div>
+        <div class="timeline-body">Definição da stack tecnológica, arquitetura de serviços, modelo de dados conceitual, RBAC, integrações e infraestrutura.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 2</div>
+        <div class="timeline-title">Modelagem do Banco de Dados</div>
+        <div class="timeline-body">ERD completo com todas as entidades, relacionamentos, índices, constraints e políticas de RLS para multi-tenancy.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 3</div>
+        <div class="timeline-title">Design System & UI/UX</div>
+        <div class="timeline-body">Design tokens, componentes base (shadcn/ui), wireframes das telas principais, protótipo navegável do portal admin e do app mobile.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 4</div>
+        <div class="timeline-title">Setup do Projeto (Monorepo)</div>
+        <div class="timeline-body">Estrutura monorepo (Turborepo), configuração do CI/CD (GitHub Actions), ambientes de dev/staging/prod, Docker Compose local.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 5</div>
+        <div class="timeline-title">Auth + Multi-Tenant Base</div>
+        <div class="timeline-body">Auth Service completo (JWT, OAuth2, 2FA, RBAC), middleware de tenant, RLS no banco, cadastro de tenants e unidades.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 6</div>
+        <div class="timeline-title">Módulo de Membros & Acesso</div>
+        <div class="timeline-body">CRUD completo de alunos, planos, matrículas, geração de QR Code, integração com catraca, log de acessos em tempo real.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 7</div>
+        <div class="timeline-title">Módulo Financeiro + Pagamentos</div>
+        <div class="timeline-body">Integração Asaas, cobranças recorrentes automáticas, gestão de inadimplência, emissão NF-e, dashboard financeiro.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 8</div>
+        <div class="timeline-title">App Mobile + Totem</div>
+        <div class="timeline-body">App React Native completo para alunos, totem PWA com pagamento TEF, check-in por QR Code, fichas de treino no app.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 9</div>
+        <div class="timeline-title">IA & Dashboard Gerencial</div>
+        <div class="timeline-body">Modelo de churn prediction, alertas proativos, dashboard BI com KPIs, relatórios exportáveis, insights automáticos.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-label">Etapa 10</div>
+        <div class="timeline-title">Testes, Deploy & Documentação</div>
+        <div class="timeline-body">Cobertura de testes ≥ 80%, testes E2E com Playwright, documentação técnica completa, deploy em produção, onboarding do primeiro cliente.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── FOOTER ── -->
+<div class="footer">
+  <strong>SmartGym Control</strong> — Documentação Técnica v1.0<br/>
+  Plataforma SaaS para Gestão de Academias &nbsp;|&nbsp; Gerado em Junho de 2026<br/>
+  <span style="color: #4b5563; font-size: 10px;">Este documento é confidencial e destinado exclusivamente ao time de desenvolvimento.</span>
+</div>
+
+</body>
+</html>
