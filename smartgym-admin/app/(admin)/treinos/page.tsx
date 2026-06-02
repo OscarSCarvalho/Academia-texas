@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Plus, Dumbbell, ClipboardList, Edit, ChevronDown, ChevronRight } from "lucide-react"
-import { mockFichas, mockInstrutores, mockAlunos } from "@/lib/mock-data"
+import { getFichas, getInstrutores, getAlunos, type Instrutor, type FichaRow } from "@/lib/db"
 
 const exerciciosBanco = [
   { grupo: "Peito", exercicios: ["Supino Reto", "Supino Inclinado", "Crucifixo", "Cross Over", "Flexão de Braço"] },
@@ -21,10 +21,19 @@ const exerciciosBanco = [
 ]
 
 export default function TreinosPage() {
+  const [fichas, setFichas] = useState<FichaRow[]>([])
+  const [instrutores, setInstrutores] = useState<Instrutor[]>([])
+  const [totalAlunos, setTotalAlunos] = useState(0)
   const [search, setSearch] = useState("")
   const [openGrupo, setOpenGrupo] = useState<string | null>(null)
 
-  const fichasFiltradas = mockFichas.filter(f =>
+  useEffect(() => {
+    getFichas().then(setFichas)
+    getInstrutores().then(setInstrutores)
+    getAlunos().then(a => setTotalAlunos(a.length))
+  }, [])
+
+  const fichasFiltradas = fichas.filter(f =>
     f.aluno.toLowerCase().includes(search.toLowerCase()) ||
     f.instrutor.toLowerCase().includes(search.toLowerCase())
   )
@@ -43,9 +52,9 @@ export default function TreinosPage() {
 
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Fichas Ativas", value: mockFichas.length, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "Sem Ficha", value: mockAlunos.length - mockFichas.length, color: "text-amber-600", bg: "bg-amber-50" },
-          { label: "Instrutores", value: mockInstrutores.length, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Fichas Ativas", value: fichas.length, color: "text-indigo-600", bg: "bg-indigo-50" },
+          { label: "Sem Ficha", value: Math.max(0, totalAlunos - fichas.length), color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Instrutores", value: instrutores.length, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Exercícios", value: exerciciosBanco.reduce((s, g) => s + g.exercicios.length, 0), color: "text-violet-600", bg: "bg-violet-50" },
         ].map((s) => (
           <Card key={s.label} className="border-0 shadow-sm">
@@ -173,7 +182,7 @@ export default function TreinosPage() {
         {/* Instrutores tab */}
         <TabsContent value="instrutores" className="mt-4">
           <div className="grid grid-cols-3 gap-4">
-            {mockInstrutores.map((inst) => (
+            {instrutores.map((inst) => (
               <Card key={inst.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-5 flex items-center gap-4">
                   <Avatar className="h-12 w-12">

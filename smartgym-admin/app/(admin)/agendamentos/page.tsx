@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { Calendar, Clock, Users, Plus, ChevronLeft, ChevronRight } from "lucide-react"
-import { mockAulas, mockInstrutores } from "@/lib/mock-data"
+import { getAulas, getInstrutores, type Aula, type Instrutor } from "@/lib/db"
 
 const diasSemana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 const horariosGrade = ["06:00", "07:00", "08:00", "09:00", "10:00", "18:00", "19:00", "20:00"]
@@ -20,9 +20,16 @@ function getOcupacaoCor(inscritos: number, vagas: number) {
 }
 
 export default function AgendamentosPage() {
+  const [aulas, setAulas] = useState<Aula[]>([])
+  const [instrutores, setInstrutores] = useState<Instrutor[]>([])
   const [diaAtivo, setDiaAtivo] = useState("Seg")
 
-  const aulasDoDia = mockAulas.filter(a => a.dias.includes(diaAtivo))
+  useEffect(() => {
+    getAulas().then(setAulas)
+    getInstrutores().then(setInstrutores)
+  }, [])
+
+  const aulasDoDia = aulas.filter(a => a.dias.includes(diaAtivo))
 
   const hoje = new Date()
   const diasMes = Array.from({ length: 7 }, (_, i) => {
@@ -46,10 +53,10 @@ export default function AgendamentosPage() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Aulas Cadastradas", value: mockAulas.length },
-          { label: "Total de Vagas", value: mockAulas.reduce((s, a) => s + a.vagas, 0) },
+          { label: "Aulas Cadastradas", value: aulas.length },
+          { label: "Total de Vagas", value: aulas.reduce((s, a) => s + a.vagas, 0) },
           { label: "Inscritos Hoje", value: aulasDoDia.reduce((s, a) => s + a.inscritos, 0) },
-          { label: "Aulas Lotadas", value: mockAulas.filter(a => a.inscritos >= a.vagas).length },
+          { label: "Aulas Lotadas", value: aulas.filter(a => a.inscritos >= a.vagas).length },
         ].map((s) => (
           <Card key={s.label} className="border-0 shadow-sm">
             <CardContent className="p-4 text-center">
@@ -162,7 +169,7 @@ export default function AgendamentosPage() {
               <CardTitle className="text-sm font-semibold">Todas as Aulas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2.5 p-4 pt-0">
-              {mockAulas.map((aula) => (
+              {aulas.map((aula) => (
                 <div key={aula.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                   <div>
                     <p className="text-sm font-medium text-gray-900">{aula.nome}</p>
@@ -189,7 +196,7 @@ export default function AgendamentosPage() {
               <CardTitle className="text-sm font-semibold">Instrutores</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 p-4 pt-0">
-              {mockInstrutores.map((inst) => (
+              {instrutores.map((inst) => (
                 <div key={inst.id} className="flex items-center gap-2">
                   <Avatar className="h-7 w-7">
                     <AvatarFallback className="bg-indigo-600 text-white text-xs font-bold">{inst.avatar}</AvatarFallback>

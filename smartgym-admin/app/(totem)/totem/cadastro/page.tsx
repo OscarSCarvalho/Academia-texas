@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, CheckCircle2, Dumbbell, CreditCard, Loader2, QrCode, Star } from "lucide-react"
-import { mockPlanos } from "@/lib/mock-data"
+import { getPlanos, type Plano } from "@/lib/db"
 import { useLang } from "../../language-context"
 import { LangSwitcher } from "../../lang-switcher"
 
@@ -28,13 +28,16 @@ function maskTel(digits: string) {
 export default function CadastroPage() {
   const router = useRouter()
   const { t } = useLang()
+  const [planos, setPlanos] = useState<Plano[]>([])
   const [step, setStep] = useState<Step>("plano")
   const [planoId, setPlanoId] = useState<string | null>(null)
   const [metodo, setMetodo] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [form, setForm] = useState({ nome: "", cpf: "", email: "", tel: "" })
 
-  const planoSel = mockPlanos.find(p => p.id === planoId)
+  useEffect(() => { getPlanos().then(setPlanos) }, [])
+
+  const planoSel = planos.find(p => p.id === planoId)
 
   const METODOS = [
     { id: "pix",      label: t.methodPix,    icon: "💠", desc: t.methodPixDesc },
@@ -141,7 +144,7 @@ export default function CadastroPage() {
               <p className="text-white/50 text-lg">{t.choosePlanSub}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              {mockPlanos.map(plano => {
+              {planos.map(plano => {
                 const selected = planoId === plano.id
                 return (
                   <button

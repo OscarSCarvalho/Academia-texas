@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Dumbbell, Search, Delete, ChevronDown, ChevronUp } from "lucide-react"
-import { mockFichas, mockAlunos } from "@/lib/mock-data"
+import { getAlunoByCpf, getFichaByAluno, type FichaRow } from "@/lib/db"
 import { useLang } from "../../language-context"
 import { LangSwitcher } from "../../lang-switcher"
 
@@ -21,7 +21,7 @@ export default function TreinosTotemPage() {
   const { t } = useLang()
   const [step, setStep] = useState<Step>("busca")
   const [cpf, setCpf] = useState("")
-  const [ficha, setFicha] = useState<typeof mockFichas[0] | null>(null)
+  const [ficha, setFicha] = useState<FichaRow | null>(null)
   const [alunoNome, setAlunoNome] = useState("")
   const [notFound, setNotFound] = useState(false)
   const [openTreino, setOpenTreino] = useState<number | null>(0)
@@ -33,11 +33,12 @@ export default function TreinosTotemPage() {
     setCpf(p => maskCpf(p.replace(/\D/g, "") + k))
   }
 
-  function buscar() {
+  async function buscar() {
     if (cpf.replace(/\D/g, "").length < 11) return
     setNotFound(false)
-    const aluno = mockAlunos[Math.floor(Math.random() * mockAlunos.length)]
-    const fichaEncontrada = mockFichas.find(f => f.aluno === aluno.nome) ?? mockFichas[0]
+    const aluno = await getAlunoByCpf(cpf)
+    if (!aluno) { setNotFound(true); return }
+    const fichaEncontrada = await getFichaByAluno(aluno.nome)
     if (fichaEncontrada) {
       setFicha(fichaEncontrada)
       setAlunoNome(aluno.nome)

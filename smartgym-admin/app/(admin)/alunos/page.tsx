@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, Plus, Filter, Download, Eye, UserCheck, UserX, Users } from "lucide-react"
-import { mockAlunos } from "@/lib/mock-data"
+import { getAlunos, type Aluno } from "@/lib/db"
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   ativo:        { label: "Ativo",        className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -19,19 +19,22 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 }
 
 export default function AlunosPage() {
+  const [alunos, setAlunos] = useState<Aluno[]>([])
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
 
-  const filtered = mockAlunos.filter((a) => {
+  useEffect(() => { getAlunos().then(setAlunos) }, [])
+
+  const filtered = alunos.filter((a) => {
     const matchSearch = a.nome.toLowerCase().includes(search.toLowerCase()) ||
       a.email.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === "todos" || a.status === statusFilter
     return matchSearch && matchStatus
   })
 
-  const totalAtivos = mockAlunos.filter(a => a.status === "ativo").length
-  const totalInadimplentes = mockAlunos.filter(a => a.status === "inadimplente").length
-  const totalInativos = mockAlunos.filter(a => a.status === "inativo").length
+  const totalAtivos = alunos.filter(a => a.status === "ativo").length
+  const totalInadimplentes = alunos.filter(a => a.status === "inadimplente").length
+  const totalInativos = alunos.filter(a => a.status === "inativo").length
 
   return (
     <div className="p-8 space-y-6">
@@ -39,7 +42,7 @@ export default function AlunosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Alunos</h1>
-          <p className="text-gray-500 text-sm mt-1">{mockAlunos.length} alunos cadastrados</p>
+          <p className="text-gray-500 text-sm mt-1">{alunos.length} alunos cadastrados</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="gap-2">
@@ -56,7 +59,7 @@ export default function AlunosPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Total", value: mockAlunos.length, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
+          { label: "Total", value: alunos.length, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
           { label: "Ativos", value: totalAtivos, icon: UserCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Inadimplentes", value: totalInadimplentes, icon: UserX, color: "text-red-600", bg: "bg-red-50" },
           { label: "Inativos", value: totalInativos, icon: UserX, color: "text-gray-500", bg: "bg-gray-100" },

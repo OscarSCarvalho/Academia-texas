@@ -4,14 +4,11 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { QrCode, Keyboard, ArrowLeft, CheckCircle2, XCircle, RefreshCw, Dumbbell, Scan, Delete } from "lucide-react"
-import { mockAlunos } from "@/lib/mock-data"
+import { getAlunoByCpf, type Aluno } from "@/lib/db"
 import { useLang } from "../../language-context"
 import { LangSwitcher } from "../../lang-switcher"
 
 type Step = "choose" | "qr" | "cpf" | "success" | "blocked"
-
-const FOUND_ALUNO = mockAlunos[0]
-const BLOCKED_ALUNO = mockAlunos[2]
 
 function maskCpf(digits: string) {
   const n = digits.slice(0, 11)
@@ -28,7 +25,7 @@ export default function CheckinPage() {
   const [cpf, setCpf] = useState("")
   const [scanning, setScanning] = useState(false)
   const [scanProgress, setScanProgress] = useState(0)
-  const [resultAluno, setResultAluno] = useState<typeof mockAlunos[0] | null>(null)
+  const [resultAluno, setResultAluno] = useState<Aluno | null>(null)
   const [countdown, setCountdown] = useState(5)
 
   function startScan() {
@@ -39,9 +36,15 @@ export default function CheckinPage() {
         if (p >= 100) {
           clearInterval(interval)
           setScanning(false)
-          const aluno = Math.random() > 0.2 ? FOUND_ALUNO : BLOCKED_ALUNO
-          setResultAluno(aluno)
-          setStep(aluno.status === "inadimplente" ? "blocked" : "success")
+          // QR scan simulation: always show success for demo
+          setResultAluno({
+            id: "demo", nome: "Carlos Eduardo Silva", avatar: "CE",
+            plano: "Mensal Premium", status: "ativo", vencimento: "2026-06-28",
+            email: "carlos@email.com", telefone: "", ingresso: "2025-01-10",
+            nascimento: "1990-03-15", cpf: "123.456.789-00", peso: "82kg", altura: "1,78m",
+            created_at: "",
+          })
+          setStep("success")
           return 100
         }
         return p + 4
@@ -67,12 +70,17 @@ export default function CheckinPage() {
     setCpf(p => maskCpf(p.replace(/\D/g, "") + k))
   }
 
-  function searchCpf() {
+  async function searchCpf() {
     const nums = cpf.replace(/\D/g, "")
     if (nums.length !== 11) return
-    const aluno = Math.random() > 0.3 ? FOUND_ALUNO : BLOCKED_ALUNO
-    setResultAluno(aluno)
-    setTimeout(() => setStep(aluno.status === "inadimplente" ? "blocked" : "success"), 600)
+    const aluno = await getAlunoByCpf(cpf)
+    if (aluno) {
+      setResultAluno(aluno)
+      setStep(aluno.status === "inadimplente" ? "blocked" : "success")
+    } else {
+      setResultAluno(null)
+      setStep("blocked")
+    }
   }
 
   // ── CHOOSE ──
@@ -268,7 +276,7 @@ export default function CheckinPage() {
   )
 
   // ── BLOCKED ──
-  if (step === "blocked" && resultAluno) return (
+  if (step === "blocked") return (
     <div className="h-screen flex flex-col items-center justify-center gap-8 px-12"
       style={{ background: "linear-gradient(135deg, #1c0505, #450a0a, #7f1d1d)" }}>
       <div className="w-32 h-32 rounded-full bg-red-400/20 flex items-center justify-center">
@@ -278,7 +286,7 @@ export default function CheckinPage() {
       <div className="text-center">
         <p className="text-red-400 text-xl font-semibold mb-2">{t.accessDenied}</p>
         <h1 className="text-5xl font-black text-white mb-3">
-          {t.helloMsg} {resultAluno.nome.split(" ")[0]}
+          {resultAluno ? `${t.helloMsg} ${resultAluno.nome.split(" ")[0]}` : t.accessDenied}
         </h1>
         <p className="text-white/50 text-lg max-w-md">{t.blockedMsg}</p>
       </div>

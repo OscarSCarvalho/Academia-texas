@@ -1,6 +1,6 @@
 "use client"
 
-import { use } from "react"
+import { use, useState, useEffect } from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +12,10 @@ import {
   ArrowLeft, Mail, Phone, Calendar, CreditCard, ShieldCheck,
   Dumbbell, Edit, Ban, CheckCircle2, QrCode,
 } from "lucide-react"
-import { mockAlunos, mockPagamentos, mockAcessos, mockFichas } from "@/lib/mock-data"
+import {
+  getAlunoById, getPagamentosByAluno, getAcessosByAluno, getFichaByAluno,
+  type Aluno, type Pagamento, type Acesso, type FichaRow,
+} from "@/lib/db"
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   ativo:        { label: "Ativo",        className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -22,12 +25,36 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 export default function AlunoPerfilPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const aluno = mockAlunos.find((a) => a.id === id)
-  if (!aluno) notFound()
+  const [loading, setLoading] = useState(true)
+  const [aluno, setAluno] = useState<Aluno | null>(null)
+  const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
+  const [acessos, setAcessos] = useState<Acesso[]>([])
+  const [ficha, setFicha] = useState<FichaRow | null>(null)
 
-  const pagamentos = mockPagamentos.filter((p) => p.aluno === aluno.nome)
-  const acessos = mockAcessos.filter((a) => a.aluno === aluno.nome)
-  const ficha = mockFichas.find((f) => f.aluno === aluno.nome)
+  useEffect(() => {
+    getAlunoById(id).then(async (a) => {
+      if (a) {
+        setAluno(a)
+        const [pags, acs, fich] = await Promise.all([
+          getPagamentosByAluno(a.nome),
+          getAcessosByAluno(a.nome),
+          getFichaByAluno(a.nome),
+        ])
+        setPagamentos(pags)
+        setAcessos(acs)
+        setFicha(fich)
+      }
+      setLoading(false)
+    })
+  }, [id])
+
+  if (loading) return (
+    <div className="p-8 flex items-center justify-center min-h-64">
+      <p className="text-gray-400 text-sm">Carregando...</p>
+    </div>
+  )
+
+  if (!aluno) return notFound()
 
   return (
     <div className="p-8 space-y-6">
@@ -235,7 +262,8 @@ export default function AlunoPerfilPage({ params }: { params: Promise<{ id: stri
                     <Dumbbell className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                     <p className="text-sm text-gray-500 mb-4">Nenhuma ficha de treino cadastrada</p>
                     <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 gap-2">
-                      <Plus className="h-4 w-4" /> Criar Ficha
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4"><path d="M12 5v14M5 12h14" /></svg>
+                      Criar Ficha
                     </Button>
                   </CardContent>
                 </Card>
@@ -246,8 +274,4 @@ export default function AlunoPerfilPage({ params }: { params: Promise<{ id: stri
       </div>
     </div>
   )
-}
-
-function Plus(props: React.SVGProps<SVGSVGElement>) {
-  return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 5v14M5 12h14" /></svg>
 }

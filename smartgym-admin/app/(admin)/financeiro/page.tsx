@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts"
-import { mockPagamentos, mockPlanos, mockRevenueData } from "@/lib/mock-data"
+import { mockRevenueData } from "@/lib/mock-data"
+import { getPagamentos, getPlanos, type Pagamento, type Plano } from "@/lib/db"
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   pago:     { label: "Pago",     className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -32,18 +33,25 @@ const pieData = [
 ]
 
 export default function FinanceiroPage() {
+  const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
+  const [planos, setPlanos] = useState<Plano[]>([])
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("todos")
 
-  const filtered = mockPagamentos.filter((p) => {
+  useEffect(() => {
+    getPagamentos().then(setPagamentos)
+    getPlanos().then(setPlanos)
+  }, [])
+
+  const filtered = pagamentos.filter((p) => {
     const matchSearch = p.aluno.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === "todos" || p.status === statusFilter
     return matchSearch && matchStatus
   })
 
-  const totalRecebido = mockPagamentos.filter(p => p.status === "pago").reduce((s, p) => s + p.valor, 0)
-  const totalVencido = mockPagamentos.filter(p => p.status === "vencido").reduce((s, p) => s + p.valor, 0)
-  const totalPendente = mockPagamentos.filter(p => p.status === "pendente").reduce((s, p) => s + p.valor, 0)
+  const totalRecebido = pagamentos.filter(p => p.status === "pago").reduce((s, p) => s + p.valor, 0)
+  const totalVencido = pagamentos.filter(p => p.status === "vencido").reduce((s, p) => s + p.valor, 0)
+  const totalPendente = pagamentos.filter(p => p.status === "pendente").reduce((s, p) => s + p.valor, 0)
 
   return (
     <div className="p-8 space-y-6">
@@ -204,7 +212,7 @@ export default function FinanceiroPage() {
 
         <TabsContent value="planos" className="mt-4">
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            {mockPlanos.map((plano) => (
+            {planos.map((plano) => (
               <Card key={plano.id} className="border-0 shadow-sm hover:shadow-md transition-shadow">
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between mb-3">

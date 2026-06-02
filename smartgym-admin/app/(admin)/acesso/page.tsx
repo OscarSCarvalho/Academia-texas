@@ -7,22 +7,25 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { ShieldCheck, ShieldX, Users, TrendingUp, QrCode, Search, LogIn, LogOut } from "lucide-react"
-import { mockAcessos, mockAcessoHoraData } from "@/lib/mock-data"
+import { mockAcessoHoraData } from "@/lib/mock-data"
+import { getAcessos, type Acesso } from "@/lib/db"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
 
 export default function AcessoPage() {
-  const [acessos, setAcessos] = useState(mockAcessos)
+  const [acessos, setAcessos] = useState<Acesso[]>([])
   const [pulsingId, setPulsingId] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+
+  useEffect(() => { getAcessos(20).then(setAcessos) }, [])
 
   // Simula novo acesso chegando
   useEffect(() => {
     const interval = setInterval(() => {
-      const novos = [
+      const novos: Omit<Acesso, "created_at">[] = [
         { id: String(Date.now()), aluno: "Amanda Costa", avatar: "AC", hora: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }), data: "Hoje", tipo: "entrada", status: "liberado" },
         { id: String(Date.now()), aluno: "Beatriz Souza", avatar: "BS", hora: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }), data: "Hoje", tipo: "saída", status: "liberado" },
       ]
-      const novo = novos[Math.floor(Math.random() * novos.length)]
+      const novo = { ...novos[Math.floor(Math.random() * novos.length)], created_at: new Date().toISOString() }
       setPulsingId(novo.id)
       setAcessos(prev => [novo, ...prev.slice(0, 19)])
       setTimeout(() => setPulsingId(null), 2000)

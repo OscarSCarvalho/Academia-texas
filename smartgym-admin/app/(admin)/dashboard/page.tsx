@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -11,7 +12,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Legend,
 } from "recharts"
-import { mockRevenueData, mockAcessoHoraData, mockAcessos, mockAlunos } from "@/lib/mock-data"
+import { mockRevenueData, mockAcessoHoraData } from "@/lib/mock-data"
+import { getAcessos, getAlunos, type Acesso, type Aluno } from "@/lib/db"
 
 const kpis = [
   { label: "Alunos Ativos", value: "248", change: "+12", up: true, icon: Users, color: "bg-indigo-500", light: "bg-indigo-50 text-indigo-600" },
@@ -31,8 +33,15 @@ const alertas = [
 ]
 
 export default function DashboardPage() {
-  const ultimosAcessos = mockAcessos.slice(0, 6)
-  const inadimplentes = mockAlunos.filter(a => a.status === "inadimplente" || a.status === "inativo")
+  const [acessos, setAcessos] = useState<Acesso[]>([])
+  const [alunos, setAlunos] = useState<Aluno[]>([])
+
+  useEffect(() => {
+    getAcessos(6).then(setAcessos)
+    getAlunos().then(setAlunos)
+  }, [])
+
+  const inadimplentes = alunos.filter(a => a.status === "inadimplente" || a.status === "inativo")
 
   return (
     <div className="p-8 space-y-8">
@@ -132,7 +141,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {ultimosAcessos.map((a) => (
+            {acessos.map((a) => (
               <div key={a.id} className="flex items-center gap-3">
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="text-xs bg-indigo-100 text-indigo-700 font-bold">{a.avatar}</AvatarFallback>
